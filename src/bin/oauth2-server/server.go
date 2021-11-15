@@ -203,6 +203,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		store.Set("LoggedInUserID", r.Form.Get("username"))
+		store.Set("UserPassword", r.Form.Get("password"))
 		store.Save()
 
 		w.Header().Set("Location", "/auth")
@@ -222,13 +223,22 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, ok := store.Get("LoggedInUserID"); !ok {
+	if username, ok := store.Get("LoggedInUserID"); !ok {
 		w.Header().Set("Location", "/login")
 		w.WriteHeader(http.StatusFound)
 		return
+	} else if password, ok := store.Get("UserPassword"); !ok {
+		w.Header().Set("Location", "/login")
+		w.WriteHeader(http.StatusFound)
+		return
+	} else {
+		if fmt.Sprint(username) == "admin" && fmt.Sprint(password) == "admin" {
+			outputHTML(w, r, "static/auth.html")
+		}
 	}
-
-	outputHTML(w, r, "static/auth.html")
+	w.Header().Set("Location", "/login")
+	w.WriteHeader(http.StatusFound)
+	return
 }
 
 func outputHTML(w http.ResponseWriter, req *http.Request, filename string) {
